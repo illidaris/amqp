@@ -1,2 +1,12 @@
-# amqp
-github.com/streadway/amqp exensions
+#### MQ管理器
+##### 初始化
+1. 连接字符串
+2. 打开通道channel
+
+#### 声明
+1. 队列、交换机、路由
+
+#### 注册消费者、生产者
+1. 注册
+2. 启动消费
+
