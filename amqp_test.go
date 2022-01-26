@@ -15,11 +15,11 @@ var testManager *AMQPManager
 func init() {
 	testManager = &AMQPManager{
 		TCPSection: TCPSection{
-			host: "localhost",
+			host: "192.168.97.224",
 			port: 5672,
-			user: "test",
+			user: "hop",
 			pwd:  "123456",
-			path: "/test",
+			path: "/hop",
 		},
 	}
 }
@@ -27,7 +27,7 @@ func init() {
 func ExampleAMQPManager_URL() {
 	m := &AMQPManager{
 		TCPSection: TCPSection{
-			host: "localhost",
+			host: "192.168.97.224",
 			port: 5672,
 			user: "test",
 			pwd:  "123456",
@@ -61,7 +61,7 @@ func TestAMQPManager_PublishOnce(t *testing.T) {
 }
 
 func TestAmqp(t *testing.T) {
-	err := testManager.Connect()
+	_, err := testManager.GetConnect()
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,9 +69,11 @@ func TestAmqp(t *testing.T) {
 		time.Sleep(time.Second * 60)
 		testManager.DisConnect()
 	}()
-	NewDeclare()
+	//NewDeclare()
 	for i := 0; i < 5; i++ {
 		c := NewConsumer("c" + strconv.Itoa(i))
+		ch, _ := testManager.NewChannel()
+		c.Channel = ch
 		err = testManager.Register(c)
 		if err != nil {
 			t.Error(err)
@@ -120,7 +122,7 @@ func NewConsumer(name string) *Consumer {
 	return c
 }
 
-func NewDeclare() {
+func NewDeclare(channel *amqpMeta.Channel) {
 	deadEx := Exchange{
 		Element:  Element{"exchange.dlx", true, false, false, nil},
 		Kind:     Direct,
@@ -159,5 +161,5 @@ func NewDeclare() {
 		Arguments: nil,
 	}
 
-	testManager.Declare(WithQueue(deadQ), WithExchange(deadEx), WithRouter(deadR), WithQueue(q), WithExchange(e), WithRouter(r))
+	testManager.Declare(channel, WithQueue(deadQ), WithExchange(deadEx), WithRouter(deadR), WithQueue(q), WithExchange(e), WithRouter(r))
 }

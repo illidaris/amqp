@@ -11,11 +11,21 @@ import (
 type AMQPManager struct {
 	lock sync.RWMutex
 	TCPSection
-
 	connection *amqpMeta.Connection
-	channel    *amqpMeta.Channel
 	producers  []IProducer
 	consumers  []IConsumer
+}
+
+func NewManager(host, user, pwd, path string, port int32) *AMQPManager {
+	manager := &AMQPManager{
+		TCPSection: TCPSection{},
+	}
+	manager.SetHost(host)
+	manager.SetPort(port)
+	manager.SetUser(user)
+	manager.SetPwd(pwd)
+	manager.SetPath(path)
+	return manager
 }
 
 // URL build url string
@@ -29,38 +39,40 @@ func (m *AMQPManager) URL() string {
 	)
 }
 
-// Connect open connection
-func (m *AMQPManager) Connect() error {
-	conn, err := amqpMeta.Dial(m.URL())
-	if err != nil {
-		return err
+// GetConnect get open connection
+func (m *AMQPManager) GetConnect() (*amqpMeta.Connection, error) {
+	if m.connection == nil || m.connection.IsClosed() {
+		m.lock.Lock()
+		defer m.lock.Unlock()
+		conn, err := amqpMeta.Dial(m.URL())
+		if err != nil {
+			return nil, err
+		}
+		m.connection = conn
 	}
-	m.connection = conn
-	ch, err := conn.Channel()
-	if err != nil {
-		return err
-	}
-	m.channel = ch
-	return nil
+	return m.connection, nil
 }
 
 // DisConnect close connection
 func (m *AMQPManager) DisConnect() error {
-	defer m.connection.Close()
-	return m.channel.Close()
+	return m.connection.Close()
 }
 
 // NewChannel get new channel in a living connect
 func (m *AMQPManager) NewChannel() (*amqpMeta.Channel, error) {
-	return m.connection.Channel()
+	conn, err := m.GetConnect()
+	if err != nil {
+		return nil, err
+	}
+	return conn.Channel()
 }
 
 // Declare declare some element, such as exchange/queue/router
-func (m *AMQPManager) Declare(declareFunc ...DeclareFunc) error {
+func (m *AMQPManager) Declare(channel *amqpMeta.Channel, declareFunc ...DeclareFunc) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	for _, f := range declareFunc {
-		err := f(m.channel)
+		err := f(channel)
 		if err != nil {
 			return err
 		}

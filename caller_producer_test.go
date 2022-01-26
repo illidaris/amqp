@@ -19,7 +19,7 @@ func TestProducer_Publish(t *testing.T) {
 		},
 	}
 
-	err := testProducerManager.Connect()
+	_, err := testProducerManager.GetConnect()
 	if err != nil {
 		t.Error(err)
 	}

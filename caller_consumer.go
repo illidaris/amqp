@@ -20,6 +20,7 @@ type Consumer struct {
 	Arguments        map[string]interface{}
 	CloseHandlers    []CloseHandler
 	DeliveryHandlers []DeliveryHandler
+	Channel          *amqpMeta.Channel
 
 	connCloseCh    <-chan *amqpMeta.Error
 	channelCloseCh <-chan *amqpMeta.Error
@@ -44,20 +45,21 @@ func (e *Consumer) onDelivery(delivery amqpMeta.Delivery) {
 func (e *Consumer) Register(m *AMQPManager) error {
 	// TODO: reconnect design
 	// 获取消费通道,确保rabbitMQ一个一个发送消息
-	err := m.channel.Qos(1, 0, true)
+	err := e.Channel.Qos(1, 0, true)
 	if err != nil {
 		return err
 	}
-	deliveryCh, err := m.channel.Consume(e.QueueName, e.Name, e.AutoAck, e.Exclusive, e.NoLocal, e.NoWait, e.Arguments)
+	deliveryCh, err := e.Channel.Consume(e.QueueName, e.Name, e.AutoAck, e.Exclusive, e.NoLocal, e.NoWait, e.Arguments)
 	if err != nil {
 		return err
 	}
 
 	e.connCloseCh = m.connection.NotifyClose(make(chan *amqpMeta.Error))
-	e.channelCloseCh = m.channel.NotifyClose(make(chan *amqpMeta.Error))
+	e.channelCloseCh = e.Channel.NotifyClose(make(chan *amqpMeta.Error))
 
 	m.consumers = append(m.consumers, e)
 	go func() {
+		defer e.Channel.Close()
 		for {
 			select {
 			case closeErr := <-e.connCloseCh:
