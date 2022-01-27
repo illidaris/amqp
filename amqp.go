@@ -30,6 +30,14 @@ func NewManager(host, user, pwd, path string, port int32) *AMQPManager {
 	return manager
 }
 
+func (m *AMQPManager) Producers() map[string]IProducer {
+	return m.producers
+}
+
+func (m *AMQPManager) Consumers() map[string]IConsumer {
+	return m.consumers
+}
+
 // URL build url string
 func (m *AMQPManager) URL() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%d/%s",

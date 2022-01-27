@@ -15,7 +15,7 @@ var testManager *AMQPManager
 func init() {
 	testManager = &AMQPManager{
 		TCPSection: TCPSection{
-			host: "192.168.97.224",
+			host: "localhost",
 			port: 5672,
 			user: "hop",
 			pwd:  "123456",
@@ -27,7 +27,7 @@ func init() {
 func ExampleAMQPManager_URL() {
 	m := &AMQPManager{
 		TCPSection: TCPSection{
-			host: "192.168.97.224",
+			host: "localhost",
 			port: 5672,
 			user: "test",
 			pwd:  "123456",
