@@ -38,7 +38,11 @@ func (p *Producer) onClose(err *amqpMeta.Error) {
 }
 
 func (p *Producer) Register(m *AMQPManager) error {
-	p.connCloseCh = m.connection.NotifyClose(make(chan *amqpMeta.Error))
+	conn, err := m.GetConnect()
+	if err != nil {
+		return err
+	}
+	p.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
 	m.producers = append(m.producers, p)
 	return nil
 }

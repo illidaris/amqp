@@ -53,8 +53,11 @@ func (e *Consumer) Register(m *AMQPManager) error {
 	if err != nil {
 		return err
 	}
-
-	e.connCloseCh = m.connection.NotifyClose(make(chan *amqpMeta.Error))
+	conn, err := m.GetConnect()
+	if err != nil {
+		return err
+	}
+	e.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
 	e.channelCloseCh = e.Channel.NotifyClose(make(chan *amqpMeta.Error))
 
 	m.consumers = append(m.consumers, e)
