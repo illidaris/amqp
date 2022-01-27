@@ -14,6 +14,7 @@ type IProducer interface {
 }
 
 type Producer struct {
+	Name          string
 	Exchange      string
 	lock          sync.RWMutex
 	m             *AMQPManager
@@ -21,8 +22,9 @@ type Producer struct {
 	connCloseCh   <-chan *amqpMeta.Error
 }
 
-func NewProducer(exchange string) IProducer {
+func NewProducer(name, exchange string) IProducer {
 	p := &Producer{
+		Name:          name,
 		Exchange:      exchange,
 		closeHandlers: make([]CloseHandler, 0),
 	}
@@ -43,7 +45,8 @@ func (p *Producer) Register(m *AMQPManager) error {
 		return err
 	}
 	p.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
-	m.producers = append(m.producers, p)
+	p.m = m
+	m.producers[p.Name] = p
 	return nil
 }
 

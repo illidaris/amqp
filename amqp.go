@@ -12,13 +12,15 @@ type AMQPManager struct {
 	lock sync.RWMutex
 	TCPSection
 	connection *amqpMeta.Connection
-	producers  []IProducer
-	consumers  []IConsumer
+	producers  map[string]IProducer
+	consumers  map[string]IConsumer
 }
 
 func NewManager(host, user, pwd, path string, port int32) *AMQPManager {
 	manager := &AMQPManager{
 		TCPSection: TCPSection{},
+		producers:  make(map[string]IProducer),
+		consumers:  make(map[string]IConsumer),
 	}
 	manager.SetHost(host)
 	manager.SetPort(port)

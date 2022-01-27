@@ -59,8 +59,7 @@ func (e *Consumer) Register(m *AMQPManager) error {
 	}
 	e.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
 	e.channelCloseCh = e.Channel.NotifyClose(make(chan *amqpMeta.Error))
-
-	m.consumers = append(m.consumers, e)
+	m.consumers[e.Name] = e
 	go func() {
 		defer e.Channel.Close()
 		for {
