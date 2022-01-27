@@ -30,6 +30,14 @@ func NewManager(host, user, pwd, path string, port int32) *AMQPManager {
 	return manager
 }
 
+func (m *AMQPManager) GetProducer(name string) IProducer {
+	return m.producers[name]
+}
+
+func (m *AMQPManager) GetConsumer(name string) IConsumer {
+	return m.consumers[name]
+}
+
 func (m *AMQPManager) Producers() map[string]IProducer {
 	return m.producers
 }
