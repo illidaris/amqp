@@ -9,43 +9,42 @@ import (
 func TestProducer_Publish(t *testing.T) {
 	ctx := context.Background()
 
-	testProducerManager := &AMQPManager{
-		TCPSection: TCPSection{
-			host: "localhost",
-			port: 5672,
-			user: "hop",
-			pwd:  "123456",
-			path: "/hop",
-		},
-	}
-
-	_, err := testProducerManager.GetConnect()
+	const (
+		TestHost = "192.168.97.224"
+		TestPort = int32(5672)
+		TestUser = "test"
+		TestPWD  = "123456"
+		TestPath = "/test"
+	)
+	m := NewManager(TestHost, TestUser, TestPWD, TestPath, TestPort)
+	_, err := m.GetConnect()
 	if err != nil {
 		t.Error(err)
 	}
+
 	go func() {
 		time.Sleep(time.Second * 5)
-		testProducerManager.DisConnect()
+		m.DisConnect()
 	}()
 
 	p := &Producer{
-		Exchange:      "diamond.change.ex",
+		Exchange:      "test.ex",
 		closeHandlers: make([]CloseHandler, 0),
-		m:             testProducerManager,
+		m:             m,
 	}
 
-	p.Register(testProducerManager)
+	p.Register(m)
 
-	errs, err := p.Publish(ctx, "diamond.change", JSONEncoder{}, &TestMessage{ID: "ticket1"}, &TestMessage{ID: "ticket2"}, &TestMessage{ID: "ticket3"})
+	errs, err := p.Publish(ctx, "test", JSONEncoder{}, &TestMessage{ID: "ticket1"}, &TestMessage{ID: "ticket2"}, &TestMessage{ID: "ticket3"})
 	println(errs)
 	println(err)
-	errs, err = p.Publish(ctx, "diamond.change", JSONEncoder{}, &TestMessage{ID: "tickasddsdaet1"})
+	errs, err = p.Publish(ctx, "test", JSONEncoder{}, &TestMessage{ID: "tickasddsdaet1"})
 	println(errs)
 	println(err)
-	errs, err = p.Publish(ctx, "diamond.change", JSONEncoder{}, &TestMessage{ID: "tickdsaadet1"})
+	errs, err = p.Publish(ctx, "test", JSONEncoder{}, &TestMessage{ID: "tickdsaadet1"})
 	println(errs)
 	println(err)
-	errs, err = p.Publish(ctx, "diamond.chnge", JSONEncoder{}, &TestMessage{ID: "tickesadt1"})
+	errs, err = p.Publish(ctx, "test", JSONEncoder{}, &TestMessage{ID: "tickesadt1"})
 	println(errs)
 	println(err)
 }
