@@ -46,7 +46,7 @@ func TestAMQPManager_URL(t *testing.T) {
 
 func ExampleAMQPManager_PublishOnce() {
 	ctx := context.TODO()
-	_, err := testManager.PublishOnce(ctx, "test.ex", "test.router", nil, "test_message_01")
+	_, err := testManager.PublishOnce(ctx, "test.ex", "test.router", JSONEncoder{}, &TestMessage2{ID: "test_message_01"})
 	if err != nil {
 		println(err)
 	}
@@ -54,7 +54,7 @@ func ExampleAMQPManager_PublishOnce() {
 
 func TestAMQPManager_PublishOnce(t *testing.T) {
 	ctx := context.TODO()
-	_, err := testManager.PublishOnce(ctx, "test.ex", "test.router", nil, "test_message_01")
+	_, err := testManager.PublishOnce(ctx, "test.ex", "test.router", JSONEncoder{}, &TestMessage2{ID: "test_message_02"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -162,4 +162,12 @@ func NewDeclare(channel *amqpMeta.Channel) {
 	}
 
 	testManager.Declare(channel, WithQueue(deadQ), WithExchange(deadEx), WithRouter(deadR), WithQueue(q), WithExchange(e), WithRouter(r))
+}
+
+type TestMessage2 struct {
+	ID string
+}
+
+func (m *TestMessage2) GetMessageID() string {
+	return m.ID
 }
