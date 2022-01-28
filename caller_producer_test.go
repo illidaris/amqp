@@ -36,16 +36,24 @@ func TestProducer_Publish(t *testing.T) {
 
 	p.Register(testProducerManager)
 
-	errs, err := p.Publish(ctx, "diamond.change", nil, "ticket1", "ticket2", "ticket3", "ticket4")
+	errs, err := p.Publish(ctx, "diamond.change", JSONEncoder{}, &TestMessage{ID: "ticket1"}, &TestMessage{ID: "ticket2"}, &TestMessage{ID: "ticket3"})
 	println(errs)
 	println(err)
-	errs, err = p.Publish(ctx, "diamond.change", nil, "xxxx456")
+	errs, err = p.Publish(ctx, "diamond.change", JSONEncoder{}, &TestMessage{ID: "tickasddsdaet1"})
 	println(errs)
 	println(err)
-	errs, err = p.Publish(ctx, "diamond.change", nil, "xxxx789")
+	errs, err = p.Publish(ctx, "diamond.change", JSONEncoder{}, &TestMessage{ID: "tickdsaadet1"})
 	println(errs)
 	println(err)
-	errs, err = p.Publish(ctx, "diamond.chnge", nil, "xx88xx123")
+	errs, err = p.Publish(ctx, "diamond.chnge", JSONEncoder{}, &TestMessage{ID: "tickesadt1"})
 	println(errs)
 	println(err)
+}
+
+type TestMessage struct {
+	ID string
+}
+
+func (m *TestMessage) GetMessageID() string {
+	return m.ID
 }

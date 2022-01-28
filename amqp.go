@@ -106,7 +106,7 @@ func (m *AMQPManager) Register(c ICaller) error {
 }
 
 // PublishOnce publish message in new connect
-func (m *AMQPManager) PublishOnce(ctx context.Context, exchange, router string, encoder Encoder, messages ...interface{}) ([]error, error) {
+func (m *AMQPManager) PublishOnce(ctx context.Context, exchange, router string, encoder Encoder, messages ...IMessage) ([]error, error) {
 	conn, err := amqpMeta.Dial(m.URL())
 	if err != nil {
 		return nil, err

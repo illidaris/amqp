@@ -10,7 +10,7 @@ var _ = IProducer(&Producer{})
 
 type IProducer interface {
 	ICaller
-	Publish(ctx context.Context, router string, encoder Encoder, messages ...interface{}) ([]error, error)
+	Publish(ctx context.Context, router string, encoder Encoder, messages ...IMessage) ([]error, error)
 }
 
 type Producer struct {
@@ -51,7 +51,7 @@ func (p *Producer) Register(m *AMQPManager) error {
 }
 
 // Publish send message
-func (p *Producer) Publish(ctx context.Context, router string, encoder Encoder, messages ...interface{}) ([]error, error) {
+func (p *Producer) Publish(ctx context.Context, router string, encoder Encoder, messages ...IMessage) ([]error, error) {
 	// TODO: reconnect design
 	// create new channel
 	ch, err := p.m.NewChannel()

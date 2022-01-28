@@ -30,7 +30,7 @@ func WithQueue(e Queue) DeclareFunc {
 }
 
 // send message to
-func send(ctx context.Context, channel *amqpMeta.Channel, exchange, router string, encoder Encoder, messages ...interface{}) ([]error, error) {
+func send(ctx context.Context, channel *amqpMeta.Channel, exchange, router string, encoder Encoder, messages ...IMessage) ([]error, error) {
 	result := make([]error, 0)
 	// on confirm model
 	err := channel.Confirm(false)
