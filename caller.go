@@ -1,5 +1,6 @@
 package amqp
 
 type ICaller interface {
-	Register(m *AMQPManager) error
+	Identify() string
+	Link(m *AMQPManager) error
 }

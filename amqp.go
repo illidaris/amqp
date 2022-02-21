@@ -5,22 +5,28 @@ import (
 	"fmt"
 	amqpMeta "github.com/streadway/amqp"
 	"sync"
+	"time"
 )
 
 // AMQPManager mq manager
 type AMQPManager struct {
-	lock sync.RWMutex
+	connLock     sync.RWMutex
+	registerLock sync.RWMutex
 	TCPSection
-	connection *amqpMeta.Connection
-	producers  map[string]IProducer
-	consumers  map[string]IConsumer
+	connection   *amqpMeta.Connection
+	producers    map[string]IProducer
+	consumers    map[string]IConsumer
+	closeCh      chan *amqpMeta.Error
+	noAutoRelink chan struct{}
 }
 
 func NewManager(host, user, pwd, path string, port int32) *AMQPManager {
 	manager := &AMQPManager{
-		TCPSection: TCPSection{},
-		producers:  make(map[string]IProducer),
-		consumers:  make(map[string]IConsumer),
+		TCPSection:   TCPSection{},
+		producers:    make(map[string]IProducer),
+		consumers:    make(map[string]IConsumer),
+		noAutoRelink: make(chan struct{}, 1),
+		//closeCh: make(chan *amqpMeta.Error,1),
 	}
 	manager.SetHost(host)
 	manager.SetPort(port)
@@ -59,14 +65,18 @@ func (m *AMQPManager) URL() string {
 
 // GetConnect get open connection
 func (m *AMQPManager) GetConnect() (*amqpMeta.Connection, error) {
+	m.connLock.Lock()
+	defer m.connLock.Unlock()
 	if m.connection == nil || m.connection.IsClosed() {
-		m.lock.Lock()
-		defer m.lock.Unlock()
+		ch := make(chan *amqpMeta.Error, 1)
+		m.closeCh = ch
 		conn, err := amqpMeta.Dial(m.URL())
 		if err != nil {
+			ch <- amqpMeta.ErrClosed
 			return nil, err
 		}
 		m.connection = conn
+		conn.NotifyClose(ch)
 	}
 	return m.connection, nil
 }
@@ -87,8 +97,8 @@ func (m *AMQPManager) NewChannel() (*amqpMeta.Channel, error) {
 
 // Declare declare some element, such as exchange/queue/router
 func (m *AMQPManager) Declare(channel *amqpMeta.Channel, declareFunc ...DeclareFunc) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+	m.registerLock.Lock()
+	defer m.registerLock.Unlock()
 	for _, f := range declareFunc {
 		err := f(channel)
 		if err != nil {
@@ -100,9 +110,45 @@ func (m *AMQPManager) Declare(channel *amqpMeta.Channel, declareFunc ...DeclareF
 
 // Register register consumer/producer in manager
 func (m *AMQPManager) Register(c ICaller) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	return c.Register(m)
+	m.registerLock.Lock()
+	defer m.registerLock.Unlock()
+	if v, ok := c.(IConsumer); ok {
+		m.consumers[c.Identify()] = v
+		return c.Link(m)
+	}
+	if v, ok := c.(IProducer); ok {
+		m.producers[c.Identify()] = v
+		return c.Link(m)
+	}
+	return fmt.Errorf("%s is not define", c.Identify())
+}
+
+func (m *AMQPManager) NoRelink() {
+	m.noAutoRelink <- struct{}{}
+}
+
+// AutoRelink auto relink consumer/producer in manager
+func (m *AMQPManager) AutoRelink(ctx context.Context) {
+	go func() {
+		for {
+			GetLogger().InfoCtxf(ctx, "begin auto relink")
+			time.Sleep(time.Second * 1)
+			select {
+			case <-m.closeCh:
+				for _, c := range m.consumers {
+					err := c.Link(m)
+					GetLogger().InfoCtxf(ctx, "consumer[%s] retry register err %s", c.Identify(), err)
+				}
+				for _, c := range m.producers {
+					err := c.Link(m)
+					GetLogger().InfoCtxf(ctx, "producer[%s] retry register err %s", c.Identify(), err)
+				}
+			case <-m.noAutoRelink:
+				GetLogger().InfoCtxf(ctx, "close auto relink")
+				return
+			}
+		}
+	}()
 }
 
 // PublishOnce publish message in new connect

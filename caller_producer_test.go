@@ -33,7 +33,7 @@ func TestProducer_Publish(t *testing.T) {
 		m:             m,
 	}
 
-	p.Register(m)
+	m.Register(p)
 
 	errs, err := p.Publish(ctx, "test", JSONEncoder{}, &TestMessage{ID: "ticket1"}, &TestMessage{ID: "ticket2"}, &TestMessage{ID: "ticket3"})
 	println(errs)

@@ -18,10 +18,11 @@ func TestConsume(t *testing.T) {
 		TestPath = "/test"
 	)
 	m := NewManager(TestHost, TestUser, TestPWD, TestPath, TestPort)
-	_, err := m.GetConnect()
-	if err != nil {
-		t.Error(err)
-	}
+	ShowDefaultLogger(true)
+	//_, err := m.GetConnect()
+	//if err != nil {
+	//	t.Error(err)
+	//}
 
 	c := NewConsumer(ctx, "c1", "test.q")
 	c.AddDeliveryHandler(func(e amqpMeta.Delivery) {
@@ -33,10 +34,19 @@ func TestConsume(t *testing.T) {
 		t.Error(e.Error())
 	})
 
-	err = c.Register(m)
+	err := m.Register(c)
 	if err != nil {
 		t.Error(err)
 	}
+	m.AutoRelink(ctx)
+	go func() {
+		time.Sleep(time.Second * 5)
+		m.connection.Close()
+		time.Sleep(time.Second * 20)
+		m.connection.Close()
+		time.Sleep(time.Second * 40)
+		m.connection.Close()
+	}()
 
-	<-time.After(time.Minute)
+	<-time.After(time.Minute * 5)
 }

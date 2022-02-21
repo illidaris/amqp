@@ -31,6 +31,10 @@ func NewProducer(name, exchange string) IProducer {
 	return p
 }
 
+func (p *Producer) Identify() string {
+	return p.Name
+}
+
 func (p *Producer) onClose(err *amqpMeta.Error) {
 	if p.closeHandlers != nil {
 		for _, h := range p.closeHandlers {
@@ -39,14 +43,12 @@ func (p *Producer) onClose(err *amqpMeta.Error) {
 	}
 }
 
-func (p *Producer) Register(m *AMQPManager) error {
+func (p *Producer) Link(m *AMQPManager) error {
 	conn, err := m.GetConnect()
 	if err != nil {
 		return err
 	}
 	p.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
-	p.m = m
-	m.producers[p.Name] = p
 	return nil
 }
 

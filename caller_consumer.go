@@ -42,6 +42,10 @@ func NewConsumer(ctx context.Context, name, queue string) IConsumer {
 	}
 }
 
+func (e *Consumer) Identify() string {
+	return e.Name
+}
+
 func (e *Consumer) AddCloseHandler(h CloseHandler) {
 	e.CloseHandlers = append(e.CloseHandlers, h)
 }
@@ -66,14 +70,12 @@ func (e *Consumer) onDelivery(delivery amqpMeta.Delivery) {
 	}
 }
 
-func (e *Consumer) Register(m *AMQPManager) error {
+func (e *Consumer) Link(m *AMQPManager) error {
 	conn, err := m.GetConnect()
 	if err != nil {
 		return err
 	}
 	e.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
-	e.m = m
-	m.consumers[e.Name] = e
 	ch, err := m.NewChannel()
 	if err != nil {
 		return err
