@@ -8,6 +8,7 @@ import (
 
 type IMessage interface {
 	GetMessageID() string
+	GetTimeout() time.Duration
 }
 
 func packMessage(encoder Encoder, message IMessage) (amqpMeta.Publishing, error) {

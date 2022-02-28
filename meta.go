@@ -55,7 +55,7 @@ func send(ctx context.Context, channel *amqpMeta.Channel, exchange, router strin
 			result = append(result, msgErr)
 			break
 		}
-		_, msgErr = publishResult(ctx, closeCh, confirmCh, returnCh, time.Second*30)
+		_, msgErr = publishResult(ctx, closeCh, confirmCh, returnCh, message.GetTimeout())
 		if msgErr != nil {
 			GetLogger().ErrorCtxf(ctx, "message[%s] publish failed", messagePacked.MessageId)
 			result = append(result, msgErr)

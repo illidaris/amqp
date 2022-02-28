@@ -56,3 +56,7 @@ type TestMessage struct {
 func (m *TestMessage) GetMessageID() string {
 	return m.ID
 }
+
+func (m *TestMessage) GetTimeout() time.Duration {
+	return time.Second * 3
+}
