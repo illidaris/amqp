@@ -48,6 +48,7 @@ func (p *Producer) Link(m *AMQPManager) error {
 	if err != nil {
 		return err
 	}
+	p.m = m
 	p.connCloseCh = conn.NotifyClose(make(chan *amqpMeta.Error))
 	return nil
 }
